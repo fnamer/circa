@@ -1,9 +1,10 @@
 import argparse
 
+from .results import Result
 from .tracer import Tracer
 
 
-def trace(program: str, entrypoint: str = "__main__"):
+def trace(program: str, entrypoint: str = "__main__") -> Result:
     tracer = Tracer(program)
     return tracer.run(entrypoint)
 
