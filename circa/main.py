@@ -3,7 +3,7 @@ import argparse
 from .tracer import Tracer
 
 
-def trace(program: str, entrypoint: str = None):
+def trace(program: str, entrypoint: str = "__main__"):
     tracer = Tracer(program)
     return tracer.run(entrypoint)
 
@@ -11,7 +11,7 @@ def trace(program: str, entrypoint: str = None):
 def main() -> None:
     parser = argparse.ArgumentParser("circa")
     parser.add_argument("program")
-    parser.add_argument("entrypoint", nargs="?")
+    parser.add_argument("entrypoint", nargs="?", default="__main__")
 
     args = parser.parse_args()
 
