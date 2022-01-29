@@ -24,11 +24,12 @@ class Tracer:
 
     def _find_block(self, name: str) -> tuple[list[str], Path]:
         if self.path.is_file():
-            module = self.path.stem
-            definitions = (
-                name.removeprefix(module).split(".") if name != "__main__" else []
+            return (
+                name.removeprefix(self.path.stem).split(".")
+                if name != "__main__"
+                else [],
+                self.path,
             )
-            return definitions, self.path
 
         parts = name.split(".")
         definitions: list[str] = []
