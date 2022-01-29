@@ -46,4 +46,4 @@ class Tracer:
 
     def run(self, entrypoint: str = "__main__") -> Result:
         block = self.get_block(entrypoint)
-        return NotImplementedError()
+        raise NotImplementedError()
