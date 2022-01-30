@@ -1,13 +1,16 @@
+from collections import deque
 from pathlib import Path
+from typing import Generator
 
 from .blocks import Block
-from .results import Result
+from .results import Call
+from .results import Trace
 
 
 class Tracer:
     def __init__(self, program: str) -> None:
         self.program = program
-        self.path = Path(program).resolve()
+        self.path = Path(program)
         self._blocks: dict[str, Block] = {}
 
     def get_block(self, name: str) -> Block:
@@ -43,8 +46,26 @@ class Tracer:
 
             definitions.insert(0, parts.pop())
 
-        raise Exception(f"NoSuchBlock: '{name}'")
+        raise Exception(f"BlockNotFound: '{name}'")
 
-    def run(self, entrypoint: str = "__main__") -> Result:
-        block = self.get_block(entrypoint)
-        raise NotImplementedError()
+    def trace_block(self, block: Block) -> Trace:
+        calls: list[Call] = []
+        return Trace(
+            name=block.name,
+            filename=block.filename,
+            lineno=block.lineno,
+            offset=block.offset,
+            calls=calls,
+        )
+
+    def run(self, entrypoint: str = "__main__") -> Generator[Trace, None, None]:
+        names = deque([entrypoint])
+        while names:
+            name = names.popleft()
+            block = self.get_block(name)
+            trace = self.trace_block(block)
+
+            yield trace
+
+            for call in trace.calls:
+                names.append(call.name)
