@@ -1,10 +1,11 @@
 import argparse
+from typing import Generator
 
-from .results import Result
+from .results import Trace
 from .tracer import Tracer
 
 
-def trace(program: str, entrypoint: str = "__main__") -> Result:
+def trace(program: str, entrypoint: str = "__main__") -> Generator[Trace, None, None]:
     tracer = Tracer(program)
     return tracer.run(entrypoint)
 
@@ -16,5 +17,5 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    result = trace(args.program, args.entrypoint)
-    print(result)
+    for result in trace(args.program, args.entrypoint):
+        print(result)
