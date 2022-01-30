@@ -1,12 +1,11 @@
 import ast
 import tokenize
 from pathlib import Path
-from typing import Optional
 
 
 class Block:
     def __init__(
-        self, node: ast.AST, filename: Optional[str] = None, name: str = "__main__"
+        self, node: ast.AST, filename: str = "<module>", name: str = "__main__"
     ):
         self.node = node
         self.filename = filename
@@ -20,11 +19,13 @@ class Block:
 
     @property
     def lineno(self) -> int:
-        return self.node.lineno
+        lineno = getattr(self.node, "lineno", 1)
+        return lineno
 
     @property
     def offset(self) -> int:
-        return self.node.col_offset
+        col_offset = getattr(self.node, "col_offset", 0)
+        return col_offset
 
     def get(self, name: str) -> "Block":
         for child in ast.iter_child_nodes(self.node):
