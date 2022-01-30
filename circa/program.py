@@ -31,8 +31,13 @@ class Program:
 
         with tokenize.open(filename) as fp:
             node = ast.parse(fp.read())
-            bname = f"{self.path.stem}.{filename.stem}"
-            block = Block(node, bname, filename)
+
+        bname = (
+            f"{self.path.stem}.{filename.stem}"
+            if self.path.is_dir()
+            else self.path.stem
+        )
+        block = Block(node, bname, filename)
 
         for definition in definitions:
             block = block.get(definition)
@@ -41,7 +46,7 @@ class Program:
 
     def _find_block(self, name: str) -> tuple[list[str], Path]:
         if self.path.is_file():
-            definition = self.path.stem
+            definition = name.replace(f"{self.path.stem}", "").strip(".")
             return [definition] if definition else [], self.path
 
         parts = name.split(".")[1:]
