@@ -1,71 +1,29 @@
-from collections import deque
-from pathlib import Path
-from typing import Generator
+import ast
+from dataclasses import dataclass
+from dataclasses import field
 
 from .blocks import Block
 from .results import Call
 from .results import Trace
 
 
-class Tracer:
-    def __init__(self, program: str) -> None:
-        self.program = program
-        self.path = Path(program)
-        self._blocks: dict[str, Block] = {}
+@dataclass
+class Frame:
+    locals: dict[str, str] = field(default_factory=dict)
+    globals: dict[str, str] = field(default_factory=dict)
+    calls: list[Call] = field(default_factory=list)
 
-    def get_block(self, name: str) -> Block:
-        block = self._blocks.get(name, self._load_block(name))
-        self._blocks[name] = block
-        return block
 
-    def _load_block(self, name: str) -> Block:
-        definitions, filename = self._find_block(name)
-        block = Block.read(filename)
-        for definition in definitions:
-            block = block.get(definition)
-        return block
+class Tracer(ast.NodeVisitor):
+    def __init__(self, block: Block) -> None:
+        self.block = block
 
-    def _find_block(self, name: str) -> tuple[list[str], Path]:
-        if self.path.is_file():
-            return (
-                name.removeprefix(self.path.stem).split(".")
-                if name != "__main__"
-                else [],
-                self.path,
-            )
-
-        parts = name.split(".")
-        definitions: list[str] = []
-
-        for _ in range(len(parts)):
-            path = "/".join(parts)
-            file = (self.path / path).with_suffix(".py")
-
-            if file.exists():
-                return definitions, file
-
-            definitions.insert(0, parts.pop())
-
-        raise Exception(f"BlockNotFound: '{name}'")
-
-    def trace_block(self, block: Block) -> Trace:
-        calls: list[Call] = []
+    def run(self) -> Trace:
+        self.frame = Frame()
         return Trace(
-            name=block.name,
-            filename=block.filename,
-            lineno=block.lineno,
-            offset=block.offset,
-            calls=calls,
+            name=self.block.name,
+            filename=self.block.filename,
+            lineno=self.block.lineno,
+            offset=self.block.offset,
+            calls=self.frame.calls,
         )
-
-    def run(self, entrypoint: str = "__main__") -> Generator[Trace, None, None]:
-        names = deque([entrypoint])
-        while names:
-            name = names.popleft()
-            block = self.get_block(name)
-            trace = self.trace_block(block)
-
-            yield trace
-
-            for call in trace.calls:
-                names.append(call.name)
