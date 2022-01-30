@@ -1,19 +1,22 @@
 import argparse
 from typing import Generator
+from typing import Optional
 
+from .program import Program
 from .results import Trace
-from .tracer import Tracer
 
 
-def trace(program: str, entrypoint: str = "__main__") -> Generator[Trace, None, None]:
-    tracer = Tracer(program)
-    return tracer.run(entrypoint)
+def trace(
+    program: str, entrypoint: Optional[str] = None
+) -> Generator[Trace, None, None]:
+    _program = Program(program)
+    return _program.trace(entrypoint)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser("circa")
     parser.add_argument("program")
-    parser.add_argument("entrypoint", nargs="?", default="__main__")
+    parser.add_argument("entrypoint", nargs="?")
 
     args = parser.parse_args()
 
