@@ -24,8 +24,8 @@ class Block:
 
     @property
     def offset(self) -> int:
-        col_offset = getattr(self.node, "col_offset", 0)
-        return col_offset
+        col_offset = getattr(self.node, "col_offset", -1)
+        return col_offset + 1
 
     def get(self, name: str) -> "Block":
         for child in ast.iter_child_nodes(self.node):
