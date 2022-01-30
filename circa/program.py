@@ -1,11 +1,11 @@
+import ast
+import tokenize
 from collections import deque
 from pathlib import Path
 from typing import Generator
 from typing import Optional
 
 from .blocks import Block
-from .results import Trace
-from .tracer import Tracer
 
 
 class Program:
@@ -19,7 +19,7 @@ class Program:
     def main(self) -> str:
         if self.path.is_file():
             return self.path.stem
-        return "__main__"
+        return f"{self.path.stem}.__main__"
 
     def get_block(self, name: str) -> Block:
         block = self._blocks.get(name, self._load_block(name))
@@ -28,17 +28,23 @@ class Program:
 
     def _load_block(self, name: str) -> Block:
         definitions, filename = self._find_block(name)
-        block = Block.read(filename)
+
+        with tokenize.open(filename) as fp:
+            node = ast.parse(fp.read())
+            bname = f"{self.path.stem}.{filename.stem}"
+            block = Block(node, bname, filename)
+
         for definition in definitions:
             block = block.get(definition)
+
         return block
 
     def _find_block(self, name: str) -> tuple[list[str], Path]:
         if self.path.is_file():
-            definition = name.removeprefix(self.path.stem)
+            definition = self.path.stem
             return [definition] if definition else [], self.path
 
-        parts = name.split(".")
+        parts = name.split(".")[1:]
         definitions: list[str] = []
 
         for _ in range(len(parts)):
@@ -52,16 +58,14 @@ class Program:
 
         raise Exception(f"BlockNotFound: '{name}'")
 
-    def trace(self, entrypoint: Optional[str] = None) -> Generator[Trace, None, None]:
+    def trace(self, entrypoint: Optional[str] = None) -> Generator[Block, None, None]:
         _entrypoint = entrypoint if entrypoint is not None else self.main
         names = deque([_entrypoint])
         while names:
             name = names.popleft()
             block = self.get_block(name)
-            tracer = Tracer(block)
-            trace = tracer.run()
 
-            yield trace
+            yield block
 
-            for call in trace.calls:
+            for call in block.calls:
                 names.append(call.name)
