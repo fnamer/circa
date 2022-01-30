@@ -18,6 +18,14 @@ class Block:
             node = ast.parse(fp.read())
             return Block(node, filename=str(filename), name=Path(filename).stem)
 
+    @property
+    def lineno(self) -> int:
+        return self.node.lineno
+
+    @property
+    def offset(self) -> int:
+        return self.node.col_offset
+
     def get(self, name: str) -> "Block":
         for child in ast.iter_child_nodes(self.node):
             if getattr(child, "name", None) == name:
