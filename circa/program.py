@@ -47,9 +47,9 @@ class Program:
             definitions.insert(0, part)
 
         # maybe package.__init__
-        path = self.path / part / "__init__.py"
-        if path.exists():
-            return f"{part}.__init__", definitions[1:], path
+        init = self.path / part / "__init__.py"
+        if init.exists():
+            return f"{part}.__init__", definitions[1:], init
 
         raise Exception(f"BlockNotFound: '{name}'")
 

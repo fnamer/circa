@@ -58,7 +58,10 @@ class Block(ast.NodeVisitor):
             parent = parent.parent
         return definition
 
-    def _is_firstparty_module(self, module: str) -> bool:
+    def _is_firstparty_module(self, module: Optional[str]) -> bool:
+        if module is None:
+            return True
+
         if module in sys.stdlib_module_names:
             return False
 
