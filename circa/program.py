@@ -55,6 +55,7 @@ class Program:
 
     def trace(self, entrypoint: str) -> Generator[Block, None, None]:
         names = deque([entrypoint])
+        seen = set()
         while names:
             name = names.popleft()
             block = self.get_block(name)
@@ -62,4 +63,6 @@ class Program:
             yield block
 
             for call in block.calls:
-                names.append(call.name)
+                if call.name not in seen:
+                    names.append(call.name)
+                    seen.add(call.name)
