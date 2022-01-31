@@ -63,14 +63,24 @@ class Block(ast.NodeVisitor):
             parent = parent.parent
         return definition
 
+    def _is_firstparty_module(self, module: str) -> bool:
+        if module in sys.stdlib_module_names:
+            return False
+
+        # very hacky check to differentiate between module and package
+        block = self
+        while block.parent is not None:
+            block = block.parent
+        return "." in block.name
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             name = alias.asname if alias.asname is not None else alias.name
-            if alias.name not in sys.stdlib_module_names:
+            if self._is_firstparty_module(alias.name):
                 self._names[name] = alias.name
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        if node.module in sys.stdlib_module_names:
+        if not self._is_firstparty_module(node.module):
             return
 
         for alias in node.names:
