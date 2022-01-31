@@ -98,3 +98,4 @@ class Block(ast.NodeVisitor):
         if name is not None:
             call = Call(name, self.filename, node.lineno, node.col_offset)
             self.calls.append(call)
+        self.generic_visit(node)
