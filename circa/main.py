@@ -1,16 +1,18 @@
 import argparse
 from typing import Generator
-from typing import Optional
 
 from .blocks import Block
 from .program import Program
 
 
-def trace(
-    program: str, entrypoint: Optional[str] = None
-) -> Generator[Block, None, None]:
+def trace(entrypoint: str, program: str = ".") -> Generator[Block, None, None]:
     _program = Program(program)
-    return _program.trace(entrypoint)
+    _entrypoint = (
+        f"{entrypoint}.__main__"
+        if (_program.path / entrypoint).is_dir()
+        else entrypoint
+    )
+    return _program.trace(_entrypoint)
 
 
 def report(block: Block) -> None:
@@ -23,10 +25,10 @@ def report(block: Block) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser("circa")
-    parser.add_argument("program")
-    parser.add_argument("entrypoint", nargs="?")
+    parser.add_argument("entrypoint")
+    parser.add_argument("program", nargs="?", default=".")
 
     args = parser.parse_args()
 
-    for block in trace(args.program, args.entrypoint):
+    for block in trace(args.entrypoint, args.program):
         report(block)

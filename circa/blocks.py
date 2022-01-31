@@ -18,7 +18,7 @@ class Block(ast.NodeVisitor):
         self, node: ast.AST, name: str, filename: Path, parent: Optional["Block"] = None
     ):
         self.node = node
-        self._name = name
+        self.name = name
         self.filename = filename
         self.parent = parent
         self._names: dict[str, str] = {}
@@ -30,12 +30,6 @@ class Block(ast.NodeVisitor):
         if self.parent is None:
             return self._names
         return self.parent.names | self._names
-
-    @property
-    def name(self) -> str:
-        if self.parent is None:
-            return self._name
-        return f"{self.parent.name}.{self._name}"
 
     @property
     def lineno(self) -> int:
@@ -51,7 +45,8 @@ class Block(ast.NodeVisitor):
     def get(self, name: str) -> "Block":
         for child in ast.iter_child_nodes(self.node):
             if getattr(child, "name", None) == name:
-                return Block(child, filename=self.filename, name=name, parent=self)
+                fullname = f"{self.name}.{name}"
+                return Block(child, filename=self.filename, name=fullname, parent=self)
         raise Exception(f"BlockNotFound: '{name}'")
 
     def resolve_import(self, module: Optional[str], name: str, level: int) -> str:
