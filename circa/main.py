@@ -1,7 +1,9 @@
-import argparse
 from typing import Generator
 
+import click
+
 from .blocks import Block
+from .blocks import Call
 from .program import Program
 
 
@@ -15,20 +17,27 @@ def trace(entrypoint: str, program: str = ".") -> Generator[Block, None, None]:
     return _program.trace(_entrypoint)
 
 
-def report(block: Block) -> None:
-    print(f"Block: {block.name} {block.filename}:{block.lineno}:{block.offset}")
-    print("Calls:")
-    for call in block.calls:
-        print(f"    - {call.name} {call.filename}:{call.lineno}:{call.offset}")
-    print()
+def _style_call(call: Call) -> str:
+    name = click.style(call.name, fg="green")
+    location = f"{call.filename}:{call.lineno}:{call.offset}"
+    return f"{name} {location}"
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser("circa")
-    parser.add_argument("entrypoint")
-    parser.add_argument("program", nargs="?", default=".")
+def _locate(obj: Call | Block) -> str:
+    return f"{obj.filename}:{obj.lineno}:{obj.offset}"
 
-    args = parser.parse_args()
 
-    for block in trace(args.entrypoint, args.program):
-        report(block)
+def report(blocks: Generator[Block, None, None]) -> Generator[str, None, None]:
+    for block in blocks:
+        yield f"{click.style(block.name, fg='yellow')} {_locate(block)}\n"
+        for call in block.calls:
+            yield f" {click.style(call.name, fg='green')} {_locate(call)}\n"
+        yield "\n"
+
+
+@click.command("circa")
+@click.argument("entrypoint")
+@click.argument("program", default=".")
+def main(entrypoint: str, program: str) -> None:
+    blocks = trace(entrypoint, program)
+    click.echo_via_pager(report(blocks))
